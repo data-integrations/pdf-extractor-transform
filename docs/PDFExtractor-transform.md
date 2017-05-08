@@ -1,4 +1,4 @@
-# PDF Extractor Action
+# PDF Extractor Transform
 
 
 Description
