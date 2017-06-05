@@ -20,7 +20,7 @@
 
   <groupId>co.cask.hydrator.plugins</groupId>
   <artifactId>pdf-extractor-transform</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
   <packaging>jar</packaging>
 
   <name>PDF Extractor Transform</name>
@@ -35,7 +35,7 @@
     <widgets.dir>widgets</widgets.dir>
     <docs.dir>docs</docs.dir>
     <!-- These are the application template artifacts that this plugin will be available for. -->
-    <app.parents>system:cdap-etl-batch[4.1.0,4.2.0),system:cdap-etl-realtime[4.1.0,4.2.0),system:cdap-data-pipeline[4.1.0,4.2.0),system:cdap-data-streams[4.1.0,4.2.0)</app.parents>
+    <app.parents>system:cdap-etl-batch[4.1.0,5.0.0-SNAPSHOT),system:cdap-etl-realtime[4.1.0,5.0.0-SNAPSHOT),system:cdap-data-pipeline[4.1.0,5.0.0-SNAPSHOT),system:cdap-data-streams[4.1.0,5.0.0-SNAPSHOT)</app.parents>
     <!-- this is here because project.basedir evaluates to null in the script build step -->
     <main.basedir>${project.basedir}</main.basedir>
     <!-- This is the list of packages where your code exists. You can add multiple and separated with a ; or use wildcards *. -->
