@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 /**
- * Quickly filters records based on a set criteria.
+ * Extracts content and metadata from a PDF using the Apache PDFBox library.
  */
 @Plugin(type = Transform.PLUGIN_TYPE)
 @Name("PDFExtractor")
