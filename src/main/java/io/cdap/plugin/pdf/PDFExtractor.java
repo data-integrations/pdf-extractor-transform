@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,13 +18,12 @@ package io.cdap.plugin.pdf;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.api.annotation.Description;
-import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.etl.api.Emitter;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.TransformContext;
@@ -46,7 +45,7 @@ import java.io.IOException;
 public final class PDFExtractor extends Transform<StructuredRecord, StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(PDFExtractor.class);
 
-  private final Config config;
+  private final PDFExtractorConfig config;
   private static final Schema outputSchema =
     Schema.recordOf("output",
                     Schema.Field.of("raw_pdf_data", Schema.nullableOf(Schema.of(Schema.Type.BYTES))),
@@ -64,15 +63,19 @@ public final class PDFExtractor extends Transform<StructuredRecord, StructuredRe
   private PDFTextStripper strip;
 
   @VisibleForTesting
-  public PDFExtractor(Config config) {
+  public PDFExtractor(PDFExtractorConfig config) {
     this.config = config;
   }
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
     super.configurePipeline(pipelineConfigurer);
+
+    FailureCollector failureCollector = pipelineConfigurer.getStageConfigurer().getFailureCollector();
     Schema inputSchema = pipelineConfigurer.getStageConfigurer().getInputSchema();
-    config.validate(inputSchema);
+    config.validate(failureCollector, inputSchema);
+    failureCollector.getOrThrowException();
+
     pipelineConfigurer.getStageConfigurer().setOutputSchema(outputSchema);
   }
 
@@ -84,15 +87,15 @@ public final class PDFExtractor extends Transform<StructuredRecord, StructuredRe
 
   @Override
   public void transform(StructuredRecord in, Emitter<StructuredRecord> emitter) throws Exception {
-    if (in.get(config.sourceFieldName) != null) {
+    if (in.get(config.getSourceFieldName()) != null) {
       PDDocument inputDoc = null;
       try {
-        inputDoc = PDDocument.load((byte[]) in.get(config.sourceFieldName));
+        inputDoc = PDDocument.load((byte[]) in.get(config.getSourceFieldName()));
         PDDocumentInformation info = inputDoc.getDocumentInformation();
         String pdfString = strip.getText(inputDoc);
         emitter.emit(
           StructuredRecord.builder(outputSchema)
-            .set("raw_pdf_data", in.get(config.sourceFieldName))
+            .set("raw_pdf_data", in.get(config.getSourceFieldName()))
             .set("text", pdfString)
             .set("page_count", inputDoc.getNumberOfPages())
             .set("title", info.getTitle())
@@ -106,19 +109,19 @@ public final class PDFExtractor extends Transform<StructuredRecord, StructuredRe
             .set("trapped", info.getTrapped())
             .build());
       } catch (InvalidPasswordException pe) {
-        if (!config.continueOnError) {
+        if (!config.getContinueOnError()) {
           throw pe;
         } else {
           LOG.warn("Caught Invalid Password Exception. Continuing since continueOnError is true. Exception: {}", pe);
         }
       } catch (IOException io) {
-        if (!config.continueOnError) {
+        if (!config.getContinueOnError()) {
           throw io;
         } else {
           LOG.warn("Caught IOException. Continuing since continueOnError is true. Exception: {}", io);
         }
       } catch (Exception e) {
-        if (!config.continueOnError) {
+        if (!config.getContinueOnError()) {
           throw e;
         } else {
           LOG.warn("Caught {}. Continuing since continueOnError is true. Exception: {}",
@@ -132,48 +135,8 @@ public final class PDFExtractor extends Transform<StructuredRecord, StructuredRe
       }
     } else {
       LOG.warn("No data found in source field.");
-      if (!config.continueOnError) {
+      if (!config.getContinueOnError()) {
         throw new RuntimeException("No data found in source field of incoming record.");
-      }
-    }
-  }
-
-  /**
-   * PDF Extractor plugin configuration.
-   */
-  public static class Config extends PluginConfig {
-    @Name("sourceFieldName")
-    @Description("Specifies the input field containing the binary pdf data.")
-    private final String sourceFieldName;
-
-    @Macro
-    @Description("Set to true if this plugin should ignore errors.")
-    private Boolean continueOnError;
-
-    public Config(String sourceFieldName, Boolean continueOnError) {
-      this.sourceFieldName = sourceFieldName;
-      this.continueOnError = continueOnError;
-    }
-
-    public void validate(Schema inputSchema) {
-      if (inputSchema == null) {
-        throw new IllegalArgumentException("Could not get the input schema to validate.");
-      }
-      if (inputSchema.getField(sourceFieldName) == null) {
-        throw new IllegalArgumentException("Source field was not present in the input schema. Schema: " +
-                                             inputSchema.toString());
-      }
-      if (!inputSchema.getField(sourceFieldName).getSchema().isSimpleOrNullableSimple()) {
-        throw new IllegalArgumentException("Input field must be a simple type but was type: " +
-                                             inputSchema.getField(sourceFieldName).getSchema().getType());
-      }
-      Schema.Type fieldType = inputSchema.getField(sourceFieldName).getSchema().getType();
-      if (inputSchema.getField(sourceFieldName).getSchema().isNullable()) {
-        fieldType = inputSchema.getField(sourceFieldName).getSchema().getNonNullable().getType();
-      }
-      if (fieldType != Schema.Type.BYTES) {
-        throw new IllegalArgumentException("Input field must be bytes but was: " +
-                                             inputSchema.getField(sourceFieldName).getSchema().getType());
       }
     }
   }
