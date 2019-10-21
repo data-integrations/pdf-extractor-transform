@@ -54,7 +54,7 @@ public class PDFExtractorTest {
 
   @Test
   public void testReadingPDFFiles() throws Exception {
-    PDFExtractor.Config config = new PDFExtractor.Config("body", true);
+    PDFExtractorConfig config = new PDFExtractorConfig("body", true);
     Transform<StructuredRecord, StructuredRecord> transform = new PDFExtractor(config);
     transform.initialize(null);
     ClassLoader classLoader = getClass().getClassLoader();
@@ -83,21 +83,21 @@ public class PDFExtractorTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testFieldNotInInputSchema() throws Exception {
-    PDFExtractor.Config config = new PDFExtractor.Config("body", true);
+    PDFExtractorConfig config = new PDFExtractorConfig("body", true);
     Transform<StructuredRecord, StructuredRecord> transform = new PDFExtractor(config);
     transform.configurePipeline(new MockPipelineConfigurer(INVALID_INPUT));
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testInputTypeNotBytesSchema() throws Exception {
-    PDFExtractor.Config config = new PDFExtractor.Config("a", true);
+    PDFExtractorConfig config = new PDFExtractorConfig("a", true);
     Transform<StructuredRecord, StructuredRecord> transform = new PDFExtractor(config);
     transform.configurePipeline(new MockPipelineConfigurer(INVALID_INPUT));
   }
 
   @Test(expected = InvalidPasswordException.class)
   public void testPasswordProtectedFiles() throws Exception {
-    PDFExtractor.Config config = new PDFExtractor.Config("body", false);
+    PDFExtractorConfig config = new PDFExtractorConfig("body", false);
     Transform<StructuredRecord, StructuredRecord> transform = new PDFExtractor(config);
     transform.initialize(null);
     ClassLoader classLoader = getClass().getClassLoader();
@@ -115,7 +115,7 @@ public class PDFExtractorTest {
 
   @Test
   public void testIgnoreErrors() throws Exception {
-    PDFExtractor.Config config = new PDFExtractor.Config("body", true);
+    PDFExtractorConfig config = new PDFExtractorConfig("body", true);
     Transform<StructuredRecord, StructuredRecord> transform = new PDFExtractor(config);
     transform.initialize(null);
     ClassLoader classLoader = getClass().getClassLoader();
