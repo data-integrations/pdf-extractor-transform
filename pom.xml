@@ -29,7 +29,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <cdap.version>6.0.0-SNAPSHOT</cdap.version>
     <guava.version>19.0</guava.version>
-    <pdfbox.version>2.0.4</pdfbox.version>
+    <pdfbox.version>2.0.24</pdfbox.version>
     <bouncycastle.version>1.45</bouncycastle.version>
     <!-- properties for script build step that creates the config files for the artifacts -->
     <widgets.dir>widgets</widgets.dir>
